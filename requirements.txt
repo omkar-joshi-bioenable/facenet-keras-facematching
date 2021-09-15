@@ -1,9 +1,10 @@
 # Function dependencies, for example:
 # package>=version
-google-cloud-storage==1.32.0
-opencv-python==4.4.0.46
-annoy==1.17.0
-Keras==2.6.0
-fastapi==0.68.1
-uvicorn==0.15.0
-starlette==0.16.0
+tensorflow
+google-cloud-storage
+opencv-python
+annoy
+Keras
+fastapi
+uvicorn
+starlette
