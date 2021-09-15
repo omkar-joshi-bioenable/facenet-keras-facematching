@@ -246,8 +246,7 @@ def download_registered_files():
 cloud_ann_index_file_path = 'face_registration/organization_1/project_1/face_registration-organization_1-project_1-index.ann'
 sequence_in_index_json_file = 'face_registration/organization_1/project_1/face_registration-organization_1-project_1-file_sequence_in_index.json'
 
-temp_dir = 'temp_folder'
-os.makedirs(temp_dir,exist_ok=True)
+temp_dir = '/tmp'
 model_path = os.path.join(temp_dir,'facenet_keras.h5')
 
 MODEL_BUCKET = 'faces-out'
