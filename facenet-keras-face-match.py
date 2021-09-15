@@ -257,7 +257,7 @@ model_bucket = storage_client.get_bucket(MODEL_BUCKET)
 print('global -- download facenet model')
 download_facenet_model(model_path)
 # load facenet model
-model = load_model(model_path)
+model = "load_model(model_path)"
 
 # download and load annoy model
 u,filenames = download_load_annoy_json(temp_dir,model_bucket)
