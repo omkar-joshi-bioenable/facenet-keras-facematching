@@ -9,3 +9,4 @@ keras-facenet
 fastapi
 uvicorn
 starlette
+scipy
