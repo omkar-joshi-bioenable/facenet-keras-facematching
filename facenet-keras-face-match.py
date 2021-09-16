@@ -4,7 +4,8 @@ import time
 import numpy as np
 import os
 from annoy import AnnoyIndex
-from keras.models import load_model
+#from keras.models import load_model
+from keras_facenet import FaceNet
 from google.cloud import storage 
 import json
 import time
@@ -18,8 +19,11 @@ from collections import Counter ,defaultdict
 
 storage_client=storage.Client()
 
+embedder = FaceNet("20170512-110547")
+from fastapi.middleware.cors import CORSMiddleware
+origins = ["*"]
 
-
+'''
 # get the face embedding for one face
 def get_embedding(model, face_pixels):
 	# scale pixel values
@@ -33,6 +37,13 @@ def get_embedding(model, face_pixels):
 	# make prediction to get embedding
 	yhat = model.predict(samples)
 	return yhat[0]
+'''
+def get_embedding(model,face_pixels):
+    image = cv2.cvtColor(face_pixels, cv2.COLOR_BGR2RGB)
+    embeddings = embedder.embeddings([image])
+    #yhat = model.predict(samples)
+    return embeddings[0]
+
 
 def download_facenet_model(model_path):    
     if not os.path.isfile(model_path):
@@ -170,7 +181,7 @@ def check_files(request_json,timestamp):
   return image_save_bucket,request_save_bucket,main_folder,folder_name,project_name,user_id,transaction_id
 
 
-def handle_request(request):
+def handle_request(request,payload):
   try:
     start=time.time()
     json_dict={}
@@ -194,7 +205,7 @@ def handle_request(request):
       content_type = request.headers['Content-Type']
       print("content type :",content_type)
       if content_type == 'application/json':
-        request_json = request.get_json(silent=True)
+        request_json = payload
         print("request_json=",request_json)
         if (request_json!=None):
           if (len(request_json)!=0):
@@ -246,7 +257,8 @@ def download_registered_files():
 cloud_ann_index_file_path = 'face_registration/organization_1/project_1/face_registration-organization_1-project_1-index.ann'
 sequence_in_index_json_file = 'face_registration/organization_1/project_1/face_registration-organization_1-project_1-file_sequence_in_index.json'
 
-temp_dir = '/tmp'
+temp_dir = 'temp_folder'
+os.makedirs(temp_dir,exist_ok=True)
 model_path = os.path.join(temp_dir,'facenet_keras.h5')
 
 MODEL_BUCKET = 'faces-out'
@@ -255,7 +267,7 @@ model_bucket = storage_client.get_bucket(MODEL_BUCKET)
 
 # download facenet model
 print('global -- download facenet model')
-download_facenet_model(model_path)
+#download_facenet_model(model_path)
 # load facenet model
 model = "load_model(model_path)"
 
@@ -263,16 +275,27 @@ model = "load_model(model_path)"
 u,filenames = download_load_annoy_json(temp_dir,model_bucket)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/")
 async def face_matching(request: Request):
+    print("within face_matching function")
     start=time.time()
     payload = await request.json()
+    print("payload=",payload)
     if not payload:
         msg = "no message received"
         print(f"error: {msg}")
         return f"Bad Request: {msg}", 400 
     try:
-        image_array,timestamp=handle_request(request)
+        image_array,timestamp=handle_request(request,payload)
         if image_array!='OPTIONS':
           try:
             image_array_time=time.time()
@@ -299,7 +322,6 @@ async def face_matching(request: Request):
 
 if __name__ == '__main__':
     PORT = int(os.getenv("PORT")) if os.getenv("PORT") else 8000
-    uvicorn.run(app,host = '0.0.0.0',port=PORT)    	
-            
+    uvicorn.run(app,host = '0.0.0.0',port=PORT)             
       
 
